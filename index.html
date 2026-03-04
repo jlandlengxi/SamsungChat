@@ -11,80 +11,106 @@
   .admin-tag { color:#ff3b30; }
   .rename-btn { background:#007aff; color:#fff; border:none; padding:6px 12px; border-radius:8px; font-size:14px; margin-left:auto; }
 
-  .chat { margin:12px; }
-  .msg { background:#1e1e1e; border-radius:12px; padding:12px; max-height:70vh; overflow-y:auto; }
-
+  #msgBox {
+    background:#1e1e1e; border-radius:12px; margin:12px;
+    padding:12px; max-height:70vh; overflow-y:auto;
+  }
   .item { max-width:75%; padding:8px 12px; border-radius:12px; margin:6px 0; }
   .me { background:#007aff; color:#fff; margin-left:auto; }
   .other { background:#2c2c2e; margin-right:auto; }
   .name { font-size:12px; color:#8e8e93; margin-bottom:4px; }
   .time { font-size:11px; color:#8e8e93; text-align:right; margin-top:4px; }
-  .mention { background:#fff3cc; color:#000; padding:2px 4px; border-radius:4px; }
 
-  .input-bar { position:fixed; left:0; right:0; bottom:0; background:#1e1e1e; padding:12px; display:flex; gap:8px; border-top:1px solid #333; padding-bottom:max(12px, env(safe-area-inset-bottom)); }
-  .input-main { flex:1; padding:12px 16px; border-radius:20px; background:#2c2c2e; color:#fff; border:none; outline:none; }
-  .btn-send { background:#007aff; color:#fff; border:none; padding:12px 20px; border-radius:20px; }
+  .input-bar {
+    position:fixed; left:0; right:0; bottom:0;
+    background:#1e1e1e; padding:12px; display:flex; gap:8px;
+    border-top:1px solid #333;
+    padding-bottom:max(12px, env(safe-area-inset-bottom));
+  }
+  #input {
+    flex:1; padding:12px 16px; border-radius:20px;
+    background:#2c2c2e; color:#fff; border:none; outline:none;
+  }
+  #send {
+    background:#007aff; color:#fff; border:none;
+    padding:12px 20px; border-radius:20px;
+  }
 
-  #preview { position:fixed; top:20px; right:20px; background:#1e1e1e; padding:12px; border-radius:12px; z-index:999; display:none; box-shadow:0 0 10px #000; }
+  #preview {
+    position:fixed; top:20px; right:20px; background:#1e1e1e;
+    padding:12px; border-radius:12px; z-index:999;
+    box-shadow:0 0 10px #000; display:none;
+  }
 </style>
 
 <body>
-<div class="top">Samsung Chat</div>
+<div class="top">Chat</div>
 <div class="info">
   昵称：<span id="nick"></span>
   <span id="adminTag"></span>
   <button class="rename-btn">改名</button>
 </div>
 
-<div class="chat">
-  <div class="msg" id="msgBox"></div>
-</div>
-
+<div id="msgBox"></div>
 <div id="preview"></div>
 
 <div class="input-bar">
-  <input class="input-main" id="input" placeholder="输入消息...">
-  <button class="btn-send">发送</button>
+  <input id="input" placeholder="输入消息...">
+  <button id="send">发送</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ======================================
-// 本地聊天模式（不需要服务器，能正常说话）
-// ======================================
+const SUPABASE_URL = "https://dymvlpeigdvnqhbmhump.supabase.co";
+const SUPABASE_KEY = "sb_publishable_3-phT7SANaA58aDQAYOMJg_u464NPdq";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 用户信息
 let uid = localStorage.getItem("uid") || Math.random().toString(36).slice(2,10);
 localStorage.setItem("uid", uid);
 
-let nickname = localStorage.getItem("nickname") || "用户"+uid.slice(-4);
-document.getElementById("nick").innerText = nickname;
-
+let nickname = localStorage.getItem("nickname") || "用户" + uid.slice(-4);
 let isAdmin = localStorage.getItem("is_admin") === "true";
 let adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
 
-if (isAdmin) {
-  document.getElementById("adminTag").innerHTML = `<span class=admin-tag> 👑管理员</span>`;
+document.getElementById("nick").innerText = nickname;
+updateAdminTag();
+
+function updateAdminTag() {
+  if (isAdmin) {
+    document.getElementById("adminTag").innerHTML = `<span class=admin-tag> 👑管理员</span>`;
+  } else {
+    document.getElementById("adminTag").innerHTML = ``;
+  }
 }
 
-// 消息存在本地
-let messages = JSON.parse(localStorage.getItem("localMessages") || "[]");
+const input = document.getElementById("input");
+const preview = document.getElementById("preview");
+const msgBox = document.getElementById("msgBox");
 
-const gradients = [
-  "linear-gradient(135deg, #667eea, #764ba2)",
-  "linear-gradient(135deg, #f093fb, #f5576c)",
-  "linear-gradient(135deg, #4facfe, #00f2fe)",
-];
+// 输入预览
+input.addEventListener("input", () => {
+  preview.style.display = input.value.trim() ? "block" : "none";
+  preview.innerText = "输入预览:\n" + input.value;
+});
 
-// 显示消息
-function load() {
-  const msgBox = document.getElementById("msgBox");
+// 加载历史
+async function load() {
+  const { data } = await sb
+    .from("messages")
+    .select("*")
+    .order("time", { ascending: true })
+    .limit(200);
+
   msgBox.innerHTML = "";
-  messages.forEach(m => {
+  data.forEach(m => {
     const isMe = m.uid === uid;
     const isMsgAdmin = adminList.includes(m.nick);
     const div = document.createElement("div");
     div.className = "item " + (isMe ? "me" : "other");
 
     if (isMsgAdmin) {
-      div.style.background = gradients[m.id % gradients.length];
+      div.style.background = "linear-gradient(135deg, #667eea, #764ba2)";
       div.style.color = "#fff";
     }
 
@@ -98,72 +124,49 @@ function load() {
   msgBox.scrollTop = msgBox.scrollHeight;
 }
 
-// 保存消息
-function saveMessages() {
-  localStorage.setItem("localMessages", JSON.stringify(messages));
-}
-
-// 改名
-document.querySelector(".rename-btn").onclick = () => {
-  let newName = prompt("输入新昵称", nickname);
-  if (!newName) return;
-  nickname = newName;
-  document.getElementById("nick").innerText = nickname;
-  localStorage.setItem("nickname", nickname);
-};
-
 // 发送消息
-const input = document.getElementById("input");
-const preview = document.getElementById("preview");
-
-input.addEventListener("input", () => {
-  preview.style.display = input.value ? "block" : "none";
-  preview.innerText = "输入预览：\n" + input.value;
-});
-
-function send() {
-  let text = input.value.trim();
+async function send() {
+  const text = input.value.trim();
   input.value = "";
   preview.style.display = "none";
   if (!text) return;
 
-  // 普通用户输 /op13143 直接变管理员
+  // ===================== 强制生效：任何人输 /op13143 直接变管理 =====================
   if (text === "/op13143") {
     isAdmin = true;
     localStorage.setItem("is_admin", "true");
+
     if (!adminList.includes(nickname)) {
       adminList.push(nickname);
       localStorage.setItem("adminList", JSON.stringify(adminList));
     }
-    document.getElementById("adminTag").innerHTML = `<span class=admin-tag> 👑管理员</span>`;
-    alert("✅ 你已成为管理员");
+
+    updateAdminTag();
+    alert("✅ 你已成为管理员！");
     return;
   }
+  // ==============================================================================
 
-  // 管理员清屏
+  // 管理清屏
   if (isAdmin && text === "/clean") {
-    messages = [];
-    saveMessages();
+    await sb.from("messages").delete().neq("id", 0);
     load();
     return;
   }
 
-  // 普通消息
-  messages.push({
-    id: messages.length + 1,
-    uid: uid,
-    nick: nickname,
-    text: text,
-    time: new Date().toISOString()
-  });
-  saveMessages();
+  // 发消息
+  await sb.from("messages").insert([
+    { uid: uid, nick: nickname, text: text, time: new Date().toISOString() }
+  ]);
+
   load();
 }
 
-document.querySelector(".btn-send").onclick = send;
-input.addEventListener("keydown", e => e.key === "Enter" && send());
+document.getElementById("send").onclick = send;
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") send();
+});
 
-// 初始化
 load();
 </script>
 </body>
