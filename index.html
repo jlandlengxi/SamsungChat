@@ -1,85 +1,116 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>©️Samsung</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui; }
-  html, body { height:100%; background:#f4f5f7; }
-  body { padding-bottom:70px; }
+  body { background:#121212; color:#fff; }
 
-  .top { background:#1d1f25; color:#fff; padding:20px 16px; font-size:24px; }
+  .top { background:#1d1d1f; padding:16px; font-size:20px; font-weight:600; }
 
   .info {
-    background:#fff; margin:20px; padding:14px 18px;
-    border-radius:14px; display:flex; align-items:center; gap:10px;
+    background:#1e1e1e; margin:12px; padding:12px; border-radius:12px;
+    display:flex; align-items:center; gap:8px;
   }
-  .admin-tag { color:#ff4757; font-weight:bold; }
+  .admin-tag { color:#ff3b30; font-weight:600; }
   .rename-btn {
-    background:#3792f7; color:#fff; border:none;
-    padding:6px 12px; border-radius:10px; font-size:14px;
+    background:#007aff; color:#fff; border:none; padding:6px 12px;
+    border-radius:8px; font-size:14px; margin-left:auto;
   }
 
+  /* 核心修复：给聊天区域留出足够的底部内边距，避免被输入框遮挡 */
   .chat {
-    background:#fff; margin:20px; border-radius:14px;
-    height: calc(100vh - 240px); overflow:hidden;
+    margin:12px;
+    /* 高度 = 视口高度 - 顶部栏高度 - 信息栏高度 - 输入框高度 - 安全区域高度 */
+    height: calc(100vh - 56px - 52px - 64px - env(safe-area-inset-bottom));
+    overflow:hidden;
   }
-  .msg { padding:14px; overflow-y:auto; height:100%; }
-
-  /* 输入框 —— 键盘弹出绝对不遮挡 */
-  .input-bar {
-    display:flex; padding:12px; gap:8px;
-    background:#fff; border-top:1px solid #eee;
-    position:fixed; left:0; right:0; bottom:0;
-    z-index:999; background:#fff;
+  .msg {
+    height:100%;
+    padding:12px;
+    overflow-y:auto;
+    background:#1e1e1e;
+    border-radius:12px;
   }
-  .input-main {
-    flex:1; padding:14px 16px; border:1px solid #e1e2e2;
-    border-radius:14px; font-size:15px; background:#f9f9fb;
-  }
-  .btn { padding:0 18px; border:none; border-radius:14px; font-size:15px; color:#fff; }
-  .btn-send { background:#2ed573; white-space:nowrap; }
 
   .item {
-    max-width:75%; padding:10px 14px; border-radius:12px; margin:6px 0;
+    max-width:75%;
+    padding:8px 12px;
+    border-radius:12px;
+    margin:6px 0;
+    position:relative;
   }
-  .me { background:#2ed573; color:#fff; margin-left:auto; }
-  .other { background:#f1f1f1; }
+  .me { background:#007aff; color:#fff; margin-left:auto; }
+  .other { background:#2c2c2e; margin-right:auto; }
+  .name { font-size:12px; color:#8e8e93; margin-bottom:4px; }
+  .time { font-size:11px; color:#8e8e93; text-align:right; margin-top:4px; }
 
-  .mention { background:#fffdc0; color:#000; padding:2px 4px; border-radius:4px; font-weight:bold; }
+  .mention { background:#fff3cc; color:#000; padding:2px 6px; border-radius:4px; font-weight:600; }
 
-  #atList {
-    position:absolute; bottom:70px; left:12px; background:#fff;
-    border-radius:12px; box-shadow:0 4px 12px #0002;
-    max-height:200px; overflow-y:auto; width:200px; z-index:10; display:none;
+  /* 输入框：固定在底部，适配安全区域 */
+  .input-bar {
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    background:#1e1e1e;
+    padding:12px;
+    display:flex;
+    gap:8px;
+    border-top:1px solid #2c2c2e;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
-  .atItem { padding:10px 14px; cursor:pointer; }
-  .atItem:hover { background:#f5f5f7; }
+  .input-main {
+    flex:1;
+    padding:12px 16px;
+    border:1px solid #2c2c2e;
+    border-radius:20px;
+    font-size:16px;
+    outline:none;
+    background:#2c2c2e;
+    color:#fff;
+  }
+  .btn-send {
+    background:#007aff;
+    color:#fff;
+    border:none;
+    padding:12px 20px;
+    border-radius:20px;
+    font-size:16px;
+  }
 
+  /* 悬浮预览窗：置顶显示，不遮挡输入 */
+  #preview {
+    position:fixed;
+    top:20px;
+    right:20px;
+    z-index:999;
+    background:#1e1e1e;
+    padding:12px 16px;
+    border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+    max-width:280px;
+    display:none;
+  }
+  #preview::before {
+    content:"输入预览";
+    display:block;
+    font-size:12px;
+    color:#8e8e93;
+    margin-bottom:4px;
+  }
+
+  /* 禁言弹窗 */
   #banPopup {
     position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5);
     display:none; align-items:center; justify-content:center; z-index:9999;
   }
-  .ban-box { background:#fff; width:300px; border-radius:16px; padding:20px; max-height:80vh; overflow-y:auto; }
+  .ban-box { background:#1e1e1e; width:300px; border-radius:16px; padding:20px; max-height:80vh; overflow-y:auto; }
   .ban-title { font-size:18px; font-weight:bold; margin-bottom:12px; text-align:center; }
   .ban-item { padding:10px 14px; border-radius:8px; cursor:pointer; margin-bottom:4px; }
-  .ban-item:hover { background:#f0f0f0; }
+  .ban-item:hover { background:#2c2c2e; }
   .banned { background:#ffe0e0; color:#c00; }
   .admin-user { background:#e0f0ff; color:#0066cc; cursor:not-allowed; }
-
-  .name { font-size:12px; color:#666; margin-bottom:4px; }
-  .time { font-size:11px; color:#999; text-align:right; margin-top:4px; }
-
-  /* 输入悬浮预览窗核心样式 */
-  #inputPreview {
-    position:fixed; top:20px; right:20px; z-index:998;
-    background:#fff; border-radius:12px; padding:12px 16px;
-    box-shadow:0 4px 16px rgba(0,0,0,0.15);
-    font-size:16px; max-width:60%; min-width:180px;
-    display:none; word-break:break-all;
-  }
-  #inputPreview::before {
-    content:"输入预览"; display:block; font-size:12px; color:#999; margin-bottom:4px;
-  }
 </style>
 
 <body>
@@ -88,21 +119,14 @@
 <div class="info">
   你的身份：<span id="nick"></span>
   <span id="adminTag"></span>
-  <button id="renameBtn" class="rename-btn">改名</button>
+  <button class="rename-btn">改名</button>
 </div>
 
 <div class="chat">
   <div class="msg" id="msgBox"></div>
 </div>
 
-<!-- 输入悬浮预览窗 -->
-<div id="inputPreview"></div>
-
-<div class="input-bar">
-  <div id="atList"></div>
-  <input class="input-main" id="input" placeholder="输入消息…，输入 @ 可提及他人">
-  <button class="btn btn-send" id="send">发送</button>
-</div>
+<div id="preview"></div>
 
 <div id="banPopup">
   <div class="ban-box">
@@ -111,45 +135,29 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div class="input-bar">
+  <input class="input-main" id="input" placeholder="输入消息，@ 可提及他人">
+  <button class="btn-send">发送</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://dymvlpeigdvnqhbmhump.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3-phT7SANaA58aDQAYOMJg_u464NPdq";
 
+// 基础配置
 let uid = localStorage.getItem("uid") || "user_" + Math.random().toString(36).slice(-8);
 localStorage.setItem("uid", uid);
-
 let isAdmin = localStorage.getItem("is_admin") === "true";
 let nickname = localStorage.getItem("nickname") || uid;
 document.getElementById("nick").innerText = nickname;
-
-let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || "[]");
-let adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
-
 if (isAdmin) {
   document.getElementById("adminTag").innerHTML = '<span class="admin-tag">👑 管理员</span>';
-  if (!adminList.includes(nickname)) {
-    adminList.push(nickname);
-    localStorage.setItem("adminList", JSON.stringify(adminList));
-  }
 }
 
-function canRename() {
-  if (isAdmin) return true;
-  const t = localStorage.getItem("last_rename_time");
-  return !t || Date.now() - parseInt(t) > 24*60*60*1000;
-}
-
-document.getElementById("renameBtn").onclick = () => {
-  if (!canRename()) return alert("24小时只能改名一次");
-  const newName = prompt("新名字：", nickname);
-  if (!newName || newName.length < 2 || newName.length > 10) return;
-  nickname = newName;
-  localStorage.setItem("nickname", nickname);
-  localStorage.setItem("last_rename_time", Date.now());
-  document.getElementById("nick").innerText = nickname;
-  alert("改名成功！");
-};
+// 禁言列表
+let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || "[]");
+let adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
 
 const gradients = [
   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -168,53 +176,74 @@ function getFixedColor(id) {
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const msgBox = document.getElementById("msgBox");
 const input = document.getElementById("input");
-const atList = document.getElementById("atList");
+const preview = document.getElementById("preview");
 const banPopup = document.getElementById("banPopup");
 const banList = document.getElementById("banList");
-const inputPreview = document.getElementById("inputPreview"); // 悬浮窗元素
 
-// 悬浮窗核心逻辑
-input.addEventListener("focus", () => {
-  setTimeout(() => {
-    input.scrollIntoView({ behavior:"smooth", block:"end" });
-    if (input.value.trim()) inputPreview.style.display = "block"; // 有内容时显示
-  }, 300);
-});
-
-input.addEventListener("input", () => {
-  const val = input.value.trim();
-  if (val) {
-    inputPreview.style.display = "block";
-    inputPreview.innerHTML = `<span style="font-size:12px;color:#999;">输入预览</span><br>${val.replace(/@([^\s]+)/g, '<span class="mention">@$1</span>')}`;
-  } else {
-    inputPreview.style.display = "none"; // 无内容时隐藏
-  }
-  // @提及逻辑保持不变
-  if (val.endsWith("@")) {
-    loadAtList();
-  }
-});
-
-input.addEventListener("blur", () => {
-  setTimeout(() => {
-    inputPreview.style.display = "none"; // 失去焦点隐藏
-  }, 200); // 兼容发送按钮点击
-});
-
-// 简化@提及列表加载
-async function loadAtList() {
+// --- 新增：名字禁重功能 ---
+async function getUniqueName(baseName) {
+  // 获取所有用户的最新昵称
   const { data } = await sb.from("messages")
     .select("uid, nick")
-    .order("time", { ascending: false })
-    .limit(100);
+    .order("time", { ascending: false });
 
   const userMap = {};
   data.forEach(item => {
     if (!userMap[item.uid]) userMap[item.uid] = item.nick;
   });
-  showAtList(Object.values(userMap));
+  const allNames = Object.values(userMap);
+
+  // 检查基础名是否唯一
+  if (!allNames.includes(baseName)) {
+    return baseName;
+  }
+
+  // 尝试添加数字后缀
+  let suffix = 1;
+  while (allNames.includes(baseName + suffix)) {
+    suffix++;
+  }
+  return baseName + suffix;
 }
 
+// --- 改名功能（增加禁重检查）---
+document.querySelector(".rename-btn").onclick = async () => {
+  if (!isAdmin && Date.now() - parseInt(localStorage.getItem("last_rename_time") || "0") < 86400000) {
+    alert("24小时内仅可改名一次");
+    return;
+  }
+  const newName = prompt("请输入新昵称：", nickname);
+  if (newName && newName.length >= 2 && newName.length <= 10) {
+    const uniqueName = await getUniqueName(newName);
+    if (uniqueName !== newName) {
+      alert(`昵称 "${newName}" 已被占用，自动更名为 "${uniqueName}"`);
+    }
+    nickname = uniqueName;
+    document.getElementById("nick").innerText = nickname;
+    localStorage.setItem("nickname", nickname);
+    localStorage.setItem("last_rename_time", Date.now());
+  }
+};
+
+// --- 悬浮预览核心逻辑 ---
+input.addEventListener("input", () => {
+  if (input.value.trim()) {
+    preview.style.display = "block";
+    let content = input.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    content = content.replace(/@([^\s]+)/g, '<span class="mention">@$1</span>');
+    preview.innerHTML = `<span style="font-size:12px;color:#8e8e93;">输入预览</span><br>${content}`;
+  } else {
+    preview.style.display = "none";
+  }
+});
+
+input.addEventListener("blur", () => {
+  setTimeout(() => {
+    preview.style.display = "none";
+  }, 200);
+});
+
+// --- 禁言面板 ---
 async function openBanPanel() {
   const { data } = await sb.from("messages")
     .select("uid, nick")
@@ -255,16 +284,24 @@ async function openBanPanel() {
   banPopup.style.display = "flex";
 }
 
+banPopup.onclick = (e)=>{
+  if(e.target === banPopup) banPopup.style.display = "none";
+};
+
+// --- 发送消息（发送前检查昵称唯一性）---
 async function send() {
   let text = input.value.trim();
   input.value = "";
+  preview.style.display = "none";
   if (!text) return;
 
+  // 检查是否被禁言
   if (!isAdmin && bannedUsers.includes(nickname)) {
     alert("🔇 你已被禁言");
     return;
   }
 
+  // 管理员指令
   if (isAdmin) {
     if (text === "/op13143") {
       isAdmin = true;
@@ -289,39 +326,36 @@ async function send() {
     }
   }
 
+  // 发送前检查昵称是否唯一
+  const uniqueName = await getUniqueName(nickname);
+  if (uniqueName !== nickname) {
+    alert(`昵称 "${nickname}" 已被占用，自动更名为 "${uniqueName}"`);
+    nickname = uniqueName;
+    document.getElementById("nick").innerText = nickname;
+    localStorage.setItem("nickname", nickname);
+  }
+
+  // 发送普通消息
   await sb.from("messages").insert([{
     uid: uid,
     nick: nickname,
     text: text,
     time: new Date().toISOString()
   }]);
-  atList.style.display = "none";
-  inputPreview.style.display = "none"; // 发送后隐藏悬浮窗
   load();
 }
 
-document.getElementById("send").onclick = send;
+document.querySelector(".btn-send").onclick = send;
 input.addEventListener("keydown", e => {
   if (e.key === "Enter") send();
 });
 
-function showAtList(users) {
-  atList.innerHTML = "";
-  users.forEach(u => {
-    const div = document.createElement("div");
-    div.className = "atItem";
-    div.innerText = u;
-    div.onclick = () => {
-      input.value = input.value.replace(/@$/, "@" + u + " ");
-      atList.style.display = "none";
-      input.focus();
-    };
-    atList.appendChild(div);
-  });
-  atList.style.display = "block";
-}
-
+// --- 加载消息 ---
 async function load() {
+  // 1. 先获取所有管理员的昵称列表
+  const adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
+  
+  // 2. 获取所有消息
   const { data } = await sb
     .from("messages")
     .select("*")
@@ -331,7 +365,8 @@ async function load() {
   msgBox.innerHTML = "";
   data.forEach(m => {
     const time = new Date(m.time).toLocaleTimeString();
-    const isMsgAdmin = (m.uid === uid && isAdmin);
+    // 3. 判断这条消息的发送者是不是管理员（而不是只判断是不是自己）
+    const isMsgAdmin = adminList.includes(m.nick);
     const isMe = m.uid === uid;
 
     const div = document.createElement("div");
@@ -354,10 +389,6 @@ async function load() {
   });
   msgBox.scrollTop = msgBox.scrollHeight;
 }
-
-banPopup.onclick = (e)=>{
-  if(e.target === banPopup) banPopup.style.display = "none";
-};
 
 load();
 setInterval(load, 3000);
