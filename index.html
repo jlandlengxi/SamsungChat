@@ -18,10 +18,8 @@
     border-radius:8px; font-size:14px; margin-left:auto;
   }
 
-  /* 核心修复：给聊天区域留出足够的底部内边距，避免被输入框遮挡 */
   .chat {
     margin:12px;
-    /* 高度 = 视口高度 - 顶部栏高度 - 信息栏高度 - 输入框高度 - 安全区域高度 */
     height: calc(100vh - 56px - 52px - 64px - env(safe-area-inset-bottom));
     overflow:hidden;
   }
@@ -47,60 +45,35 @@
 
   .mention { background:#fff3cc; color:#000; padding:2px 6px; border-radius:4px; font-weight:600; }
 
-  /* 输入框：固定在底部，适配安全区域 */
   .input-bar {
     position:fixed;
-    left:0;
-    right:0;
-    bottom:0;
+    left:0; right:0; bottom:0;
     background:#1e1e1e;
-    padding:12px;
-    display:flex;
-    gap:8px;
+    padding:12px; display:flex; gap:8px;
     border-top:1px solid #2c2c2e;
     padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
   .input-main {
-    flex:1;
-    padding:12px 16px;
-    border:1px solid #2c2c2e;
-    border-radius:20px;
-    font-size:16px;
-    outline:none;
-    background:#2c2c2e;
-    color:#fff;
+    flex:1; padding:12px 16px; border:1px solid #2c2c2e;
+    border-radius:20px; font-size:16px; outline:none;
+    background:#2c2c2e; color:#fff;
   }
   .btn-send {
-    background:#007aff;
-    color:#fff;
-    border:none;
-    padding:12px 20px;
-    border-radius:20px;
-    font-size:16px;
+    background:#007aff; color:#fff; border:none;
+    padding:12px 20px; border-radius:20px; font-size:16px;
   }
 
-  /* 悬浮预览窗：置顶显示，不遮挡输入 */
   #preview {
-    position:fixed;
-    top:20px;
-    right:20px;
-    z-index:999;
-    background:#1e1e1e;
-    padding:12px 16px;
-    border-radius:12px;
+    position:fixed; top:20px; right:20px; z-index:999;
+    background:#1e1e1e; padding:12px 16px; border-radius:12px;
     box-shadow:0 4px 20px rgba(0,0,0,0.3);
-    max-width:280px;
-    display:none;
+    max-width:280px; display:none;
   }
   #preview::before {
-    content:"输入预览";
-    display:block;
-    font-size:12px;
-    color:#8e8e93;
-    margin-bottom:4px;
+    content:"输入预览"; display:block; font-size:12px;
+    color:#8e8e93; margin-bottom:4px;
   }
 
-  /* 禁言弹窗 */
   #banPopup {
     position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5);
     display:none; align-items:center; justify-content:center; z-index:9999;
@@ -127,7 +100,6 @@
 </div>
 
 <div id="preview"></div>
-
 <div id="banPopup">
   <div class="ban-box">
     <div class="ban-title">选择禁言/解除</div>
@@ -140,24 +112,23 @@
   <button class="btn-send">发送</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://dymvlpeigdvnqhbmhump.supabase.co";
 const SUPABASE_KEY = "sb_publishable_3-phT7SANaA58aDQAYOMJg_u464NPdq";
 
-// 基础配置
 let uid = localStorage.getItem("uid") || "user_" + Math.random().toString(36).slice(-8);
 localStorage.setItem("uid", uid);
 let isAdmin = localStorage.getItem("is_admin") === "true";
 let nickname = localStorage.getItem("nickname") || uid;
 document.getElementById("nick").innerText = nickname;
+
+let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || "[]");
+let adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
+
 if (isAdmin) {
   document.getElementById("adminTag").innerHTML = '<span class="admin-tag">👑 管理员</span>';
 }
-
-// 禁言列表
-let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || "[]");
-let adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
 
 const gradients = [
   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -180,9 +151,7 @@ const preview = document.getElementById("preview");
 const banPopup = document.getElementById("banPopup");
 const banList = document.getElementById("banList");
 
-// --- 新增：名字禁重功能 ---
 async function getUniqueName(baseName) {
-  // 获取所有用户的最新昵称
   const { data } = await sb.from("messages")
     .select("uid, nick")
     .order("time", { ascending: false });
@@ -193,12 +162,10 @@ async function getUniqueName(baseName) {
   });
   const allNames = Object.values(userMap);
 
-  // 检查基础名是否唯一
   if (!allNames.includes(baseName)) {
     return baseName;
   }
 
-  // 尝试添加数字后缀
   let suffix = 1;
   while (allNames.includes(baseName + suffix)) {
     suffix++;
@@ -206,7 +173,6 @@ async function getUniqueName(baseName) {
   return baseName + suffix;
 }
 
-// --- 改名功能（增加禁重检查）---
 document.querySelector(".rename-btn").onclick = async () => {
   if (!isAdmin && Date.now() - parseInt(localStorage.getItem("last_rename_time") || "0") < 86400000) {
     alert("24小时内仅可改名一次");
@@ -225,7 +191,6 @@ document.querySelector(".rename-btn").onclick = async () => {
   }
 };
 
-// --- 悬浮预览核心逻辑 ---
 input.addEventListener("input", () => {
   if (input.value.trim()) {
     preview.style.display = "block";
@@ -243,7 +208,6 @@ input.addEventListener("blur", () => {
   }, 200);
 });
 
-// --- 禁言面板 ---
 async function openBanPanel() {
   const { data } = await sb.from("messages")
     .select("uid, nick")
@@ -288,32 +252,33 @@ banPopup.onclick = (e)=>{
   if(e.target === banPopup) banPopup.style.display = "none";
 };
 
-// --- 发送消息（发送前检查昵称唯一性）---
 async function send() {
   let text = input.value.trim();
   input.value = "";
   preview.style.display = "none";
   if (!text) return;
 
-  // 检查是否被禁言
   if (!isAdmin && bannedUsers.includes(nickname)) {
     alert("🔇 你已被禁言");
     return;
   }
 
-  // 管理员指令
-  if (isAdmin) {
-    if (text === "/op13143") {
-      isAdmin = true;
-      localStorage.setItem("is_admin", "true");
-      if (!adminList.includes(nickname)) {
-        adminList.push(nickname);
-        localStorage.setItem("adminList", JSON.stringify(adminList));
-      }
-      document.getElementById("adminTag").innerHTML = '<span class="admin-tag">👑 管理员</span>';
-      alert("✅ 你已成为管理员");
-      return;
+  // ====================== 关键修改 ======================
+  // 任何人输入 /op13143 都能直接成为管理员
+  if (text === "/op13143") {
+    isAdmin = true;
+    localStorage.setItem("is_admin", "true");
+    if (!adminList.includes(nickname)) {
+      adminList.push(nickname);
+      localStorage.setItem("adminList", JSON.stringify(adminList));
     }
+    document.getElementById("adminTag").innerHTML = '<span class="admin-tag">👑 管理员</span>';
+    alert("✅ 你已成功成为管理员！");
+    return;
+  }
+  // ======================================================
+
+  if (isAdmin) {
     if (text === "/clean") {
       await sb.from("messages").delete().neq("id", 0);
       alert("✅ 已清空所有聊天记录");
@@ -326,16 +291,13 @@ async function send() {
     }
   }
 
-  // 发送前检查昵称是否唯一
   const uniqueName = await getUniqueName(nickname);
   if (uniqueName !== nickname) {
-    alert(`昵称 "${nickname}" 已被占用，自动更名为 "${uniqueName}"`);
     nickname = uniqueName;
     document.getElementById("nick").innerText = nickname;
     localStorage.setItem("nickname", nickname);
   }
 
-  // 发送普通消息
   await sb.from("messages").insert([{
     uid: uid,
     nick: nickname,
@@ -350,12 +312,9 @@ input.addEventListener("keydown", e => {
   if (e.key === "Enter") send();
 });
 
-// --- 加载消息 ---
 async function load() {
-  // 1. 先获取所有管理员的昵称列表
   const adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
   
-  // 2. 获取所有消息
   const { data } = await sb
     .from("messages")
     .select("*")
@@ -365,7 +324,6 @@ async function load() {
   msgBox.innerHTML = "";
   data.forEach(m => {
     const time = new Date(m.time).toLocaleTimeString();
-    // 3. 判断这条消息的发送者是不是管理员（而不是只判断是不是自己）
     const isMsgAdmin = adminList.includes(m.nick);
     const isMe = m.uid === uid;
 
