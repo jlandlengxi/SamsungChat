@@ -1,96 +1,37 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>©️Samsung</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Chat</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui; }
-  body { background:#121212; color:#fff; }
+  body { background:#121212; color:#fff; padding-bottom:80px; }
 
-  .top { background:#1d1d1f; padding:16px; font-size:20px; font-weight:600; }
+  .top { background:#1e1e1e; padding:16px; font-size:18px; }
+  .info { background:#1e1e1e; margin:12px; padding:12px; border-radius:12px; display:flex; align-items:center; gap:8px; }
+  .admin-tag { color:#ff3b30; }
+  .rename-btn { background:#007aff; color:#fff; border:none; padding:6px 12px; border-radius:8px; font-size:14px; margin-left:auto; }
 
-  .info {
-    background:#1e1e1e; margin:12px; padding:12px; border-radius:12px;
-    display:flex; align-items:center; gap:8px;
-  }
-  .admin-tag { color:#ff3b30; font-weight:600; }
-  .rename-btn {
-    background:#007aff; color:#fff; border:none; padding:6px 12px;
-    border-radius:8px; font-size:14px; margin-left:auto;
-  }
+  .chat { margin:12px; }
+  .msg { background:#1e1e1e; border-radius:12px; padding:12px; max-height:70vh; overflow-y:auto; }
 
-  .chat {
-    margin:12px;
-    height: calc(100vh - 56px - 52px - 64px - env(safe-area-inset-bottom));
-    overflow:hidden;
-  }
-  .msg {
-    height:100%;
-    padding:12px;
-    overflow-y:auto;
-    background:#1e1e1e;
-    border-radius:12px;
-  }
-
-  .item {
-    max-width:75%;
-    padding:8px 12px;
-    border-radius:12px;
-    margin:6px 0;
-    position:relative;
-  }
+  .item { max-width:75%; padding:8px 12px; border-radius:12px; margin:6px 0; }
   .me { background:#007aff; color:#fff; margin-left:auto; }
   .other { background:#2c2c2e; margin-right:auto; }
   .name { font-size:12px; color:#8e8e93; margin-bottom:4px; }
   .time { font-size:11px; color:#8e8e93; text-align:right; margin-top:4px; }
+  .mention { background:#fff3cc; color:#000; padding:2px 4px; border-radius:4px; }
 
-  .mention { background:#fff3cc; color:#000; padding:2px 6px; border-radius:4px; font-weight:600; }
+  .input-bar { position:fixed; left:0; right:0; bottom:0; background:#1e1e1e; padding:12px; display:flex; gap:8px; border-top:1px solid #333; padding-bottom:max(12px, env(safe-area-inset-bottom)); }
+  .input-main { flex:1; padding:12px 16px; border-radius:20px; background:#2c2c2e; color:#fff; border:none; outline:none; }
+  .btn-send { background:#007aff; color:#fff; border:none; padding:12px 20px; border-radius:20px; }
 
-  .input-bar {
-    position:fixed;
-    left:0; right:0; bottom:0;
-    background:#1e1e1e;
-    padding:12px; display:flex; gap:8px;
-    border-top:1px solid #2c2c2e;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
-  }
-  .input-main {
-    flex:1; padding:12px 16px; border:1px solid #2c2c2e;
-    border-radius:20px; font-size:16px; outline:none;
-    background:#2c2c2e; color:#fff;
-  }
-  .btn-send {
-    background:#007aff; color:#fff; border:none;
-    padding:12px 20px; border-radius:20px; font-size:16px;
-  }
-
-  #preview {
-    position:fixed; top:20px; right:20px; z-index:999;
-    background:#1e1e1e; padding:12px 16px; border-radius:12px;
-    box-shadow:0 4px 20px rgba(0,0,0,0.3);
-    max-width:280px; display:none;
-  }
-  #preview::before {
-    content:"输入预览"; display:block; font-size:12px;
-    color:#8e8e93; margin-bottom:4px;
-  }
-
-  #banPopup {
-    position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5);
-    display:none; align-items:center; justify-content:center; z-index:9999;
-  }
-  .ban-box { background:#1e1e1e; width:300px; border-radius:16px; padding:20px; max-height:80vh; overflow-y:auto; }
-  .ban-title { font-size:18px; font-weight:bold; margin-bottom:12px; text-align:center; }
-  .ban-item { padding:10px 14px; border-radius:8px; cursor:pointer; margin-bottom:4px; }
-  .ban-item:hover { background:#2c2c2e; }
-  .banned { background:#ffe0e0; color:#c00; }
-  .admin-user { background:#e0f0ff; color:#0066cc; cursor:not-allowed; }
+  #preview { position:fixed; top:20px; right:20px; background:#1e1e1e; padding:12px; border-radius:12px; z-index:999; display:none; box-shadow:0 0 10px #000; }
 </style>
 
 <body>
-<div class="top">Samsung在线聊天</div>
-
+<div class="top">Samsung Chat</div>
 <div class="info">
-  你的身份：<span id="nick"></span>
+  昵称：<span id="nick"></span>
   <span id="adminTag"></span>
   <button class="rename-btn">改名</button>
 </div>
@@ -100,171 +41,93 @@
 </div>
 
 <div id="preview"></div>
-<div id="banPopup">
-  <div class="ban-box">
-    <div class="ban-title">选择禁言/解除</div>
-    <div id="banList"></div>
-  </div>
-</div>
 
 <div class="input-bar">
-  <input class="input-main" id="input" placeholder="输入消息，@ 可提及他人">
+  <input class="input-main" id="input" placeholder="输入消息...">
   <button class="btn-send">发送</button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://dymvlpeigdvnqhbmhump.supabase.co";
-const SUPABASE_KEY = "sb_publishable_3-phT7SANaA58aDQAYOMJg_u464NPdq";
-
-let uid = localStorage.getItem("uid") || "user_" + Math.random().toString(36).slice(-8);
+// ======================================
+// 本地聊天模式（不需要服务器，能正常说话）
+// ======================================
+let uid = localStorage.getItem("uid") || Math.random().toString(36).slice(2,10);
 localStorage.setItem("uid", uid);
-let isAdmin = localStorage.getItem("is_admin") === "true";
-let nickname = localStorage.getItem("nickname") || uid;
+
+let nickname = localStorage.getItem("nickname") || "用户"+uid.slice(-4);
 document.getElementById("nick").innerText = nickname;
 
-let bannedUsers = JSON.parse(localStorage.getItem("bannedUsers") || "[]");
+let isAdmin = localStorage.getItem("is_admin") === "true";
 let adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
 
 if (isAdmin) {
-  document.getElementById("adminTag").innerHTML = '<span class="admin-tag">👑 管理员</span>';
+  document.getElementById("adminTag").innerHTML = `<span class=admin-tag> 👑管理员</span>`;
 }
+
+// 消息存在本地
+let messages = JSON.parse(localStorage.getItem("localMessages") || "[]");
 
 const gradients = [
-  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-  "linear-gradient(135deg, #30cfd0 0%, #330867 100%)",
-  "linear-gradient(135deg, #ff6b6b 0%, #feca57 100%)"
+  "linear-gradient(135deg, #667eea, #764ba2)",
+  "linear-gradient(135deg, #f093fb, #f5576c)",
+  "linear-gradient(135deg, #4facfe, #00f2fe)",
 ];
 
-function getFixedColor(id) {
-  return gradients[id % gradients.length];
+// 显示消息
+function load() {
+  const msgBox = document.getElementById("msgBox");
+  msgBox.innerHTML = "";
+  messages.forEach(m => {
+    const isMe = m.uid === uid;
+    const isMsgAdmin = adminList.includes(m.nick);
+    const div = document.createElement("div");
+    div.className = "item " + (isMe ? "me" : "other");
+
+    if (isMsgAdmin) {
+      div.style.background = gradients[m.id % gradients.length];
+      div.style.color = "#fff";
+    }
+
+    div.innerHTML = `
+      <div class=name>${m.nick}</div>
+      <div>${m.text}</div>
+      <div class=time>${new Date(m.time).toLocaleTimeString()}</div>
+    `;
+    msgBox.appendChild(div);
+  });
+  msgBox.scrollTop = msgBox.scrollHeight;
 }
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const msgBox = document.getElementById("msgBox");
+// 保存消息
+function saveMessages() {
+  localStorage.setItem("localMessages", JSON.stringify(messages));
+}
+
+// 改名
+document.querySelector(".rename-btn").onclick = () => {
+  let newName = prompt("输入新昵称", nickname);
+  if (!newName) return;
+  nickname = newName;
+  document.getElementById("nick").innerText = nickname;
+  localStorage.setItem("nickname", nickname);
+};
+
+// 发送消息
 const input = document.getElementById("input");
 const preview = document.getElementById("preview");
-const banPopup = document.getElementById("banPopup");
-const banList = document.getElementById("banList");
-
-async function getUniqueName(baseName) {
-  const { data } = await sb.from("messages")
-    .select("uid, nick")
-    .order("time", { ascending: false });
-
-  const userMap = {};
-  data.forEach(item => {
-    if (!userMap[item.uid]) userMap[item.uid] = item.nick;
-  });
-  const allNames = Object.values(userMap);
-
-  if (!allNames.includes(baseName)) {
-    return baseName;
-  }
-
-  let suffix = 1;
-  while (allNames.includes(baseName + suffix)) {
-    suffix++;
-  }
-  return baseName + suffix;
-}
-
-document.querySelector(".rename-btn").onclick = async () => {
-  if (!isAdmin && Date.now() - parseInt(localStorage.getItem("last_rename_time") || "0") < 86400000) {
-    alert("24小时内仅可改名一次");
-    return;
-  }
-  const newName = prompt("请输入新昵称：", nickname);
-  if (newName && newName.length >= 2 && newName.length <= 10) {
-    const uniqueName = await getUniqueName(newName);
-    if (uniqueName !== newName) {
-      alert(`昵称 "${newName}" 已被占用，自动更名为 "${uniqueName}"`);
-    }
-    nickname = uniqueName;
-    document.getElementById("nick").innerText = nickname;
-    localStorage.setItem("nickname", nickname);
-    localStorage.setItem("last_rename_time", Date.now());
-  }
-};
 
 input.addEventListener("input", () => {
-  if (input.value.trim()) {
-    preview.style.display = "block";
-    let content = input.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    content = content.replace(/@([^\s]+)/g, '<span class="mention">@$1</span>');
-    preview.innerHTML = `<span style="font-size:12px;color:#8e8e93;">输入预览</span><br>${content}`;
-  } else {
-    preview.style.display = "none";
-  }
+  preview.style.display = input.value ? "block" : "none";
+  preview.innerText = "输入预览：\n" + input.value;
 });
 
-input.addEventListener("blur", () => {
-  setTimeout(() => {
-    preview.style.display = "none";
-  }, 200);
-});
-
-async function openBanPanel() {
-  const { data } = await sb.from("messages")
-    .select("uid, nick")
-    .order("time", { ascending: false });
-
-  const userMap = {};
-  data.forEach(item => {
-    if(!userMap[item.uid]) userMap[item.uid] = item.nick;
-  });
-  const users = Object.values(userMap);
-
-  banList.innerHTML = "";
-  users.forEach(u => {
-    const isAdminUser = adminList.includes(u);
-    const div = document.createElement("div");
-    
-    if (isAdminUser) {
-      div.className = "ban-item admin-user";
-      div.innerText = u + " (管理员)";
-      div.onclick = () => alert("❌ 无法禁言管理员");
-    } else {
-      div.className = "ban-item" + (bannedUsers.includes(u) ? " banned" : "");
-      div.innerText = u;
-      div.onclick = () => {
-        if(bannedUsers.includes(u)){
-          bannedUsers = bannedUsers.filter(x=>x!==u);
-          alert("✅ 已解除禁言："+u);
-        }else{
-          bannedUsers.push(u);
-          alert("🔇 已禁言："+u);
-        }
-        localStorage.setItem("bannedUsers", JSON.stringify(bannedUsers));
-        openBanPanel();
-      };
-    }
-    banList.appendChild(div);
-  });
-  banPopup.style.display = "flex";
-}
-
-banPopup.onclick = (e)=>{
-  if(e.target === banPopup) banPopup.style.display = "none";
-};
-
-async function send() {
+function send() {
   let text = input.value.trim();
   input.value = "";
   preview.style.display = "none";
   if (!text) return;
 
-  if (!isAdmin && bannedUsers.includes(nickname)) {
-    alert("🔇 你已被禁言");
-    return;
-  }
-
-  // ====================== 关键修改 ======================
-  // 任何人输入 /op13143 都能直接成为管理员
+  // 普通用户输 /op13143 直接变管理员
   if (text === "/op13143") {
     isAdmin = true;
     localStorage.setItem("is_admin", "true");
@@ -272,84 +135,36 @@ async function send() {
       adminList.push(nickname);
       localStorage.setItem("adminList", JSON.stringify(adminList));
     }
-    document.getElementById("adminTag").innerHTML = '<span class="admin-tag">👑 管理员</span>';
-    alert("✅ 你已成功成为管理员！");
+    document.getElementById("adminTag").innerHTML = `<span class=admin-tag> 👑管理员</span>`;
+    alert("✅ 你已成为管理员");
     return;
   }
-  // ======================================================
 
-  if (isAdmin) {
-    if (text === "/clean") {
-      await sb.from("messages").delete().neq("id", 0);
-      alert("✅ 已清空所有聊天记录");
-      load();
-      return;
-    }
-    if (text === "/ban") {
-      openBanPanel();
-      return;
-    }
+  // 管理员清屏
+  if (isAdmin && text === "/clean") {
+    messages = [];
+    saveMessages();
+    load();
+    return;
   }
 
-  const uniqueName = await getUniqueName(nickname);
-  if (uniqueName !== nickname) {
-    nickname = uniqueName;
-    document.getElementById("nick").innerText = nickname;
-    localStorage.setItem("nickname", nickname);
-  }
-
-  await sb.from("messages").insert([{
+  // 普通消息
+  messages.push({
+    id: messages.length + 1,
     uid: uid,
     nick: nickname,
     text: text,
     time: new Date().toISOString()
-  }]);
+  });
+  saveMessages();
   load();
 }
 
 document.querySelector(".btn-send").onclick = send;
-input.addEventListener("keydown", e => {
-  if (e.key === "Enter") send();
-});
+input.addEventListener("keydown", e => e.key === "Enter" && send());
 
-async function load() {
-  const adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
-  
-  const { data } = await sb
-    .from("messages")
-    .select("*")
-    .order("time", { ascending: true })
-    .limit(200);
-
-  msgBox.innerHTML = "";
-  data.forEach(m => {
-    const time = new Date(m.time).toLocaleTimeString();
-    const isMsgAdmin = adminList.includes(m.nick);
-    const isMe = m.uid === uid;
-
-    const div = document.createElement("div");
-    div.className = "item " + (isMe ? "me" : "other");
-
-    if (isMsgAdmin) {
-      div.style.background = getFixedColor(m.id);
-      div.style.color = "#fff";
-      div.style.fontWeight = "500";
-    }
-
-    let content = m.text.replace(/@([^\s]+)/g, '<span class="mention">@$1</span>');
-
-    div.innerHTML = `
-      <div class="name">${m.nick}</div>
-      <div>${content}</div>
-      <div class="time">${time}</div>
-    `;
-    msgBox.appendChild(div);
-  });
-  msgBox.scrollTop = msgBox.scrollHeight;
-}
-
+// 初始化
 load();
-setInterval(load, 3000);
 </script>
 </body>
 </html>
