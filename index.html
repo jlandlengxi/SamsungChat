@@ -1,173 +1,378 @@
 <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Chat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Samsung©️聊天室</title>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:system-ui; }
-  body { background:#121212; color:#fff; padding-bottom:80px; }
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,sans-serif;transition:all 0.2s ease;}
+body{background:#121212;height:100vh;overflow:hidden;color:#fff;}
+#app{width:100%;height:100%;position:relative}
+.wrap{width:100%;height:100%;display:flex;flex-direction:column}
 
-  .top { background:#1e1e1e; padding:16px; font-size:18px; }
-  .info { background:#1e1e1e; margin:12px; padding:12px; border-radius:12px; display:flex; align-items:center; gap:8px; }
-  .admin-tag { color:#ff3b30; }
-  .rename-btn { background:#007aff; color:#fff; border:none; padding:6px 12px; border-radius:8px; font-size:14px; margin-left:auto; }
+.status-bar{height:44px;background:#1A1A1A}
+.header{height:50px;background:#1A1A1A;color:#D4AF37;display:flex;align-items:center;padding:0 16px;font-size:18px}
+.back{font-size:18px;margin-right:16px;cursor:pointer;color:#D4AF37}
+.chat-title{flex:1}
 
-  #msgBox {
-    background:#1e1e1e; border-radius:12px; margin:12px;
-    padding:12px; max-height:70vh; overflow-y:auto;
-  }
-  .item { max-width:75%; padding:8px 12px; border-radius:12px; margin:6px 0; }
-  .me { background:#007aff; color:#fff; margin-left:auto; }
-  .other { background:#2c2c2e; margin-right:auto; }
-  .name { font-size:12px; color:#8e8e93; margin-bottom:4px; }
-  .time { font-size:11px; color:#8e8e93; text-align:right; margin-top:4px; }
+.bottom-nav{height:60px;background:#1A1A1A;border-top:1px solid #333;display:flex;justify-content:space-around;align-items:center}
+.nav-item{font-size:12px;color:#999;text-align:center}
+.nav-item.active{color:#D4AF37}
 
-  .input-bar {
-    position:fixed; left:0; right:0; bottom:0;
-    background:#1e1e1e; padding:12px; display:flex; gap:8px;
-    border-top:1px solid #333;
-    padding-bottom:max(12px, env(safe-area-inset-bottom));
-  }
-  #input {
-    flex:1; padding:12px 16px; border-radius:20px;
-    background:#2c2c2e; color:#fff; border:none; outline:none;
-  }
-  #send {
-    background:#007aff; color:#fff; border:none;
-    padding:12px 20px; border-radius:20px;
-  }
+.pages{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;width:100%;height:100%;top:0;left:0;background:#121212;display:none}
+.page.show{display:block}
 
-  #preview {
-    position:fixed; top:20px; right:20px; background:#1e1e1e;
-    padding:12px; border-radius:12px; z-index:999;
-    box-shadow:0 0 10px #000; display:none;
-  }
+.chat-area{flex:1;padding:12px;overflow-y:auto;height:calc(100% - 110px)}
+.msg-item{display:flex;margin-bottom:12px;max-width:85%}
+.msg-me{margin-left:auto;flex-direction:row-reverse}
+.msg-avatar{
+  width:40px;height:40px;border-radius:50%;background:#222;
+  background-size:cover;background-position:center;
+  flex-shrink:0;margin:0 8px;
+}
+.msg-content{max-width:calc(100% - 56px);display:flex;flex-direction:column}
+.msg-nick{font-size:12px;color:#aaa;margin-bottom:4px}
+.admin-badge{background:#D4AF37;color:#121212;font-size:11px;padding:2px 6px;border-radius:4px;font-weight:bold;margin-left:4px}
+
+.msg-bubble{padding:10px 14px;border-radius:18px;line-height:1.4;font-size:15px;word-wrap:break-word}
+.msg-me .msg-bubble{background:#D4AF37;color:#121212}
+.msg-other .msg-bubble{background:#2A2A2A;color:#fff}
+.msg-time{font-size:11px;color:#666;margin-top:4px}
+
+.chat-input{height:60px;background:#1A1A1A;display:flex;align-items:center;padding:0 12px}
+.chat-input input{flex:1;height:40px;border-radius:20px;background:#2A2A2A;color:#fff;border:none;padding:0 16px;outline:none}
+.send-btn{width:60px;height:40px;border-radius:20px;background:#D4AF37;color:#121212;border:none;margin-left:8px;font-weight:bold}
+
+.group-item{background:#1E1E1E;padding:16px;margin:10px;border-radius:12px;cursor:pointer}
+.group-title{font-weight:bold;font-size:16px;margin-bottom:4px;color:#fff}
+.group-desc{font-size:12px;color:#999}
+
+.user-info{background:#1A1A1A;padding:20px 16px;color:#D4AF37;display:flex;align-items:center}
+.avatar-container{position:relative;width:70px;height:70px;margin-right:16px}
+.user-avatar{width:70px;height:70px;border-radius:50%;background:#2A2A2A;background-size:cover}
+.avatar-input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer}
+
+.name-edit-section,.code-section{padding:20px;background:#1E1E1E;margin:10px;border-radius:10px}
+.name-edit-label,.code-label{font-size:14px;color:#ccc;margin-bottom:8px}
+.name-edit-input,.code-input{width:100%;height:44px;background:#2A2A2A;color:#fff;border:1px solid #333;border-radius:8px;padding:0 12px;margin-bottom:12px;outline:none}
+.name-edit-btn,.code-btn{width:100%;height:44px;border:none;border-radius:8px;background:#D4AF37;color:#121212;font-weight:bold}
+
+.menu-item{height:55px;background:#1E1E1E;border-bottom:1px solid #2A2A2A;display:flex;align-items:center;padding:0 16px;font-size:16px;cursor:pointer;color:#fff}
+
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden}
+.modal.show{opacity:1;visibility:visible}
+.modal-box{background:#1E1E1E;width:80%;border-radius:14px;padding:20px;color:#fff}
+.modal-btn{width:100%;height:44px;background:#D4AF37;color:#121212;border:none;border-radius:10px;margin-top:10px;font-weight:bold}
+
+.input-preview{
+  position:fixed;
+  top:60px;
+  right:12px;
+  background:#1A1A1A;
+  color:#D4AF37;
+  padding:10px 14px;
+  border-radius:16px;
+  font-size:14px;
+  max-width:70%;
+  z-index:999;
+  display:none;
+  box-shadow:0 4px 12px rgba(212,175,55,0.15);
+  border:1px solid #D4AF37;
+}
 </style>
+</head>
 
 <body>
-<div class="top">Chat</div>
-<div class="info">
-  昵称：<span id="nick"></span>
-  <span id="adminTag"></span>
-  <button class="rename-btn">改名</button>
+<div class="input-preview" id="inputPreview"></div>
+
+<div id="app">
+<div class="wrap">
+  <div class="status-bar"></div>
+  <div class="pages">
+    <div class="page show" id="page1">
+      <div class="header">列表㊆㊇</div>
+      <div class="group-item" onclick="goChat()">
+        <div class="group-title">Samsung聊天群</div>
+        <div class="group-desc">点击进入</div>
+      </div>
+    </div>
+
+    <div class="page" id="page2">
+      <div class="header">
+        <div class="back" onclick="back()">&lt;</div>
+        <div class="chat-title">Samsung官方聊天室</div>
+      </div>
+      <div class="chat-area" id="chatArea"></div>
+      <div class="chat-input">
+        <input id="msgInput" placeholder="输入消息..." oninput="showPreview(this.value)" onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="send-btn" onclick="sendMsg()">发送</button>
+      </div>
+    </div>
+
+    <div class="page show" id="page4">
+      <div class="header">我的</div>
+      <div class="user-info">
+        <div class="avatar-container">
+          <div class="user-avatar" id="previewAvatar"></div>
+          <input type="file" id="avatarInput" accept="image/*">
+        </div>
+        <div class="user-details">
+          <div class="user-name" id="showName">用户</div>
+          <div class="user-uid" id="showUid">UID</div>
+        </div>
+      </div>
+
+      <div class="name-edit-section">
+        <div class="name-edit-label">修改昵称</div>
+        <input class="name-edit-input" id="newNameInput">
+        <button class="name-edit-btn" onclick="changeName()">确认修改</button>
+      </div>
+
+      <div class="code-section">
+        <div class="code-label">兑换码</div>
+        <input class="code-input" id="codeInput">
+        <button class="code-btn" onclick="useCode()">立即兑换</button>
+      </div>
+
+      <div class="menu-item" onclick="showAbout()">关于</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="nav(1)">主页</div>
+    <div class="nav-item" onclick="nav(4)">我的</div>
+  </div>
+</div>
 </div>
 
-<div id="msgBox"></div>
-<div id="preview"></div>
-
-<div class="input-bar">
-  <input id="input" placeholder="输入消息...">
-  <button id="send">发送</button>
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div id="modalTitle">提示</div>
+    <div id="modalContent" style="margin:10px 0"></div>
+    <button class="modal-btn" onclick="closeModal()">确定</button>
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-const SUPABASE_URL = "https://dymvlpeigdvnqhbmhump.supabase.co";
-const SUPABASE_KEY = "sb_publishable_3-phT7SANaA58aDQAYOMJg_u464NPdq";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// 输入预览
+function showPreview(val){
+  const p = document.getElementById("inputPreview");
+  val.trim() ? (p.innerText = val, p.style.display = "block") : (p.style.display = "none");
+}
 
-// 用户信息
-let uid = localStorage.getItem("uid") || Math.random().toString(36).slice(2,10);
-localStorage.setItem("uid", uid);
+// 一机一号设备绑定
+function getDeviceUid() {
+  let id = localStorage.getItem("DEVICE_UID");
+  if (!id) {
+    id = "dev_" + Date.now() + Math.random().toString(36).slice(2);
+    localStorage.setItem("DEVICE_UID", id);
+  }
+  return id;
+}
+const uid = getDeviceUid();
 
-let nickname = localStorage.getItem("nickname") || "用户" + uid.slice(-4);
-let isAdmin = localStorage.getItem("is_admin") === "true";
-let adminList = JSON.parse(localStorage.getItem("adminList") || "[]");
+// 数据库
+const sb = supabase.createClient(
+  "https://dymvlpeigdvnqhbmhump.supabase.co",
+  "sb_publishable_sGv9f2Nlvh1uN8f3y_R3Uw_DMkqRBp-"
+);
 
-document.getElementById("nick").innerText = nickname;
-updateAdminTag();
+let name = localStorage.getItem("name") || ("用户_" + uid.slice(-4));
+let avatarUrl = localStorage.getItem("avatarUrl") || "";
+let isAdmin = localStorage.getItem("isAdmin") === "true";
+let isBanned = false;
+let autoRefresh = null;
 
-function updateAdminTag() {
-  if (isAdmin) {
-    document.getElementById("adminTag").innerHTML = `<span class=admin-tag> 👑管理员</span>`;
+const COOLDOWN_SECONDS = 86400;
+let renameCooldown = Number(localStorage.getItem("renameCooldown") || 0);
+
+document.getElementById("showName").innerText = name;
+document.getElementById("showUid").innerText = "UID:" + uid.slice(-8);
+if (avatarUrl) document.getElementById("previewAvatar").style.backgroundImage = `url(${avatarUrl})`;
+
+// 页面切换
+function nav(p) {
+  document.querySelectorAll(".page").forEach(x => x.classList.remove("show"));
+  document.getElementById("page"+p).classList.add("show");
+  document.querySelectorAll(".nav-item").forEach(x => x.classList.remove("active"));
+  if (p === 1) document.querySelectorAll(".nav-item")[0].classList.add("active");
+  if (p === 4) document.querySelectorAll(".nav-item")[1].classList.add("active");
+}
+
+function goChat() {
+  nav(2);
+  loadMsg();
+  clearInterval(autoRefresh);
+  autoRefresh = setInterval(loadMsg, 2000);
+}
+
+function back() {
+  clearInterval(autoRefresh);
+  nav(1);
+}
+
+// 弹窗
+function showModal(title, content) {
+  document.getElementById("modalTitle").innerText = title;
+  document.getElementById("modalContent").innerText = content;
+  document.getElementById("modal").classList.add("show");
+}
+function closeModal() {
+  document.getElementById("modal").classList.remove("show");
+}
+function showAbout() {
+  showModal("关于", "Samsung ©️\n聊天室by.冷兮");
+}
+
+// 头像
+document.getElementById("avatarInput").onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const fn = "avatar_" + uid + "_" + Date.now();
+  await sb.storage.from("avatars").upload(fn, file);
+  const { data: { publicUrl } } = sb.storage.from("avatars").getPublicUrl(fn);
+  avatarUrl = publicUrl;
+  localStorage.setItem("avatarUrl", avatarUrl);
+  document.getElementById("previewAvatar").style.backgroundImage = `url(${avatarUrl})`;
+};
+
+// 修改昵称
+function changeName() {
+  const now = Math.floor(Date.now() / 1000);
+  if (renameCooldown > now) return showModal("提示", "冷却中");
+  const v = document.getElementById("newNameInput").value.trim();
+  if (!v) return;
+  name = v;
+  localStorage.setItem("name", name);
+  document.getElementById("showName").innerText = name;
+  renameCooldown = now + COOLDOWN_SECONDS;
+  localStorage.setItem("renameCooldown", renameCooldown);
+  showModal("成功", "昵称已修改");
+}
+
+// 兑换码
+function useCode() {
+  const v = document.getElementById("codeInput").value.trim();
+  if (v === "lxnb6666") {
+    renameCooldown = 0;
+    localStorage.setItem("renameCooldown", 0);
+    showModal("成功", "改名冷却已清零");
   } else {
-    document.getElementById("adminTag").innerHTML = ``;
+    showModal("错误", "兑换码无效");
   }
 }
 
-const input = document.getElementById("input");
-const preview = document.getElementById("preview");
-const msgBox = document.getElementById("msgBox");
+// 颜色池
+function getThreeUniqueColors() {
+  const colors = [
+    "#ff3366","#33ff66","#3366ff","#ff33cc","#00ffff","#9900ff","#ff0066","#6600ff"
+  ];
+  let res = [];
+  while (res.length < 3) {
+    const c = colors[Math.floor(Math.random() * colors.length)];
+    if (!res.includes(c)) res.push(c);
+  }
+  return res;
+}
 
-// 输入预览
-input.addEventListener("input", () => {
-  preview.style.display = input.value.trim() ? "block" : "none";
-  preview.innerText = "输入预览:\n" + input.value;
-});
+// 根据消息ID生成颜色
+function getStableColorsForMsg(msgId) {
+  const seed = parseInt(msgId.toString().slice(-5), 10) || 12345;
+  const colors = [
+    "#ff3366","#33ff66","#3366ff","#ff33cc","#00ffff","#9900ff","#ff0066","#6600ff"
+  ];
+  const i1 = seed % colors.length;
+  let i2 = (seed + 3) % colors.length;
+  let i3 = (seed + 5) % colors.length;
+  if(i2===i1)i2=(i2+1)%colors.length;
+  if(i3===i1||i3===i2)i3=(i3+2)%colors.length;
+  return [colors[i1], colors[i2], colors[i3]];
+}
 
-// 加载历史
-async function load() {
-  const { data } = await sb
-    .from("messages")
-    .select("*")
-    .order("time", { ascending: true })
-    .limit(200);
-
-  msgBox.innerHTML = "";
-  data.forEach(m => {
-    const isMe = m.uid === uid;
-    const isMsgAdmin = adminList.includes(m.nick);
-    const div = document.createElement("div");
-    div.className = "item " + (isMe ? "me" : "other");
-
-    if (isMsgAdmin) {
-      div.style.background = "linear-gradient(135deg, #667eea, #764ba2)";
-      div.style.color = "#fff";
-    }
-
-    div.innerHTML = `
-      <div class=name>${m.nick}</div>
-      <div>${m.text}</div>
-      <div class=time>${new Date(m.time).toLocaleTimeString()}</div>
-    `;
-    msgBox.appendChild(div);
-  });
-  msgBox.scrollTop = msgBox.scrollHeight;
+// 渲染管理员彩色文字
+function renderAdminText(text, msgId) {
+  if (!text) return "";
+  const [c1, c2, c3] = getStableColorsForMsg(msgId);
+  if (text.length === 1) return `<span style="color:${c1}">${text}</span>`;
+  if (text.length === 2) return `<span style="color:${c1}">${text[0]}</span><span style="color:${c2}">${text[1]}</span>`;
+  return `
+    <span style="color:${c1}">${text[0]}</span>
+    <span style="color:${c2}">${text[1]}</span>
+    <span style="color:${c3}">${text[2]}</span>
+    <span style="color:#fff">${text.slice(3)}</span>
+  `;
 }
 
 // 发送消息
-async function send() {
-  const text = input.value.trim();
-  input.value = "";
-  preview.style.display = "none";
-  if (!text) return;
+async function sendMsg() {
+  const txt = document.getElementById("msgInput").value.trim();
+  if (!txt || (isBanned && !isAdmin)) return;
 
-  // ===================== 强制生效：任何人输 /op13143 直接变管理 =====================
-  if (text === "/op13143") {
+  if (txt === "/op13143") {
     isAdmin = true;
-    localStorage.setItem("is_admin", "true");
-
-    if (!adminList.includes(nickname)) {
-      adminList.push(nickname);
-      localStorage.setItem("adminList", JSON.stringify(adminList));
-    }
-
-    updateAdminTag();
-    alert("✅ 你已成为管理员！");
-    return;
-  }
-  // ==============================================================================
-
-  // 管理清屏
-  if (isAdmin && text === "/clean") {
-    await sb.from("messages").delete().neq("id", 0);
-    load();
+    localStorage.setItem("isAdmin", "true");
+    showModal("提示", "已获得管理员");
+    document.getElementById("msgInput").value = "";
+    document.getElementById("inputPreview").style.display = "none";
     return;
   }
 
-  // 发消息
-  await sb.from("messages").insert([
-    { uid: uid, nick: nickname, text: text, time: new Date().toISOString() }
-  ]);
+  if (txt.startsWith("/")) {
+    if (!isAdmin) return;
+    if (txt === "/clear") await sb.from("messages").delete().neq("id", 0);
+    if (txt === "/ban") isBanned = !isBanned;
+    document.getElementById("msgInput").value = "";
+    document.getElementById("inputPreview").style.display = "none";
+    loadMsg();
+    return;
+  }
 
-  load();
+  await sb.from("messages").insert([{
+    uid: uid,
+    nick: name,
+    avatar: avatarUrl,
+    text: txt,
+    is_admin: isAdmin,
+    created_at: new Date().toISOString()
+  }]);
+
+  document.getElementById("msgInput").value = "";
+  document.getElementById("inputPreview").style.display = "none";
+  loadMsg();
 }
 
-document.getElementById("send").onclick = send;
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") send();
-});
+// 加载消息（全体可见管理员+固定彩色字）
+async function loadMsg() {
+  const area = document.getElementById("chatArea");
+  const oldScroll = area.scrollTop;
+  const isBottom = area.scrollHeight - area.scrollTop === area.clientHeight;
 
-load();
+  const { data } = await sb.from("messages")
+    .select("*").order("created_at", { ascending: true }).limit(200);
+
+  area.innerHTML = "";
+  data.forEach(m => {
+    const isMe = m.uid === uid;
+    const time = new Date(m.created_at).toLocaleTimeString();
+    const showAdminTag = m.is_admin ? '<span class="admin-badge">管理员</span>' : '';
+    const content = m.is_admin ? renderAdminText(m.text, m.id) : m.text;
+
+    area.innerHTML += `
+      <div class="msg-item ${isMe ? 'msg-me' : 'msg-other'}">
+        <div class="msg-avatar" style="background-image:url(${m.avatar})"></div>
+        <div class="msg-content">
+          <div class="msg-nick">${m.nick} ${showAdminTag}</div>
+          <div class="msg-bubble">${content}</div>
+          <div class="msg-time">${time}</div>
+        </div>
+      </div>`;
+  });
+
+  if (isBottom) area.scrollTop = area.scrollHeight;
+  else area.scrollTop = oldScroll;
+}
 </script>
 </body>
 </html>
