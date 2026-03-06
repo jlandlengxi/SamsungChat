@@ -264,45 +264,17 @@ function useCode() {
   }
 }
 
-// 颜色池
-function getThreeUniqueColors() {
-  const colors = [
-    "#ff3366","#33ff66","#3366ff","#ff33cc","#00ffff","#9900ff","#ff0066","#6600ff"
-  ];
-  let res = [];
-  while (res.length < 3) {
-    const c = colors[Math.floor(Math.random() * colors.length)];
-    if (!res.includes(c)) res.push(c);
-  }
-  return res;
-}
-
-// 根据消息ID生成颜色
-function getStableColorsForMsg(msgId) {
-  const seed = parseInt(msgId.toString().slice(-5), 10) || 12345;
-  const colors = [
-    "#ff3366","#33ff66","#3366ff","#ff33cc","#00ffff","#9900ff","#ff0066","#6600ff"
-  ];
-  const i1 = seed % colors.length;
-  let i2 = (seed + 3) % colors.length;
-  let i3 = (seed + 5) % colors.length;
-  if(i2===i1)i2=(i2+1)%colors.length;
-  if(i3===i1||i3===i2)i3=(i3+2)%colors.length;
-  return [colors[i1], colors[i2], colors[i3]];
-}
-
-// 渲染管理员彩色文字
-function renderAdminText(text, msgId) {
+// 管理员每个字不同色
+const adminColors = [
+  "#ff3366","#33ff66","#3366ff","#ff33cc",
+  "#00ffff","#9900ff","#ff0066","#6600ff"
+];
+function renderAdminText(text) {
   if (!text) return "";
-  const [c1, c2, c3] = getStableColorsForMsg(msgId);
-  if (text.length === 1) return `<span style="color:${c1}">${text}</span>`;
-  if (text.length === 2) return `<span style="color:${c1}">${text[0]}</span><span style="color:${c2}">${text[1]}</span>`;
-  return `
-    <span style="color:${c1}">${text[0]}</span>
-    <span style="color:${c2}">${text[1]}</span>
-    <span style="color:${c3}">${text[2]}</span>
-    <span style="color:#fff">${text.slice(3)}</span>
-  `;
+  return text.split("").map((ch, i) => {
+    const c = adminColors[i % adminColors.length];
+    return `<span style="color:${c};font-weight:500;">${ch}</span>`;
+  }).join("");
 }
 
 // 发送消息
@@ -343,7 +315,7 @@ async function sendMsg() {
   loadMsg();
 }
 
-// 加载消息（全体可见管理员+固定彩色字）
+// 加载消息
 async function loadMsg() {
   const area = document.getElementById("chatArea");
   const oldScroll = area.scrollTop;
@@ -357,7 +329,7 @@ async function loadMsg() {
     const isMe = m.uid === uid;
     const time = new Date(m.created_at).toLocaleTimeString();
     const showAdminTag = m.is_admin ? '<span class="admin-badge">管理员</span>' : '';
-    const content = m.is_admin ? renderAdminText(m.text, m.id) : m.text;
+    const content = m.is_admin ? renderAdminText(m.text) : m.text;
 
     area.innerHTML += `
       <div class="msg-item ${isMe ? 'msg-me' : 'msg-other'}">
